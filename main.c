@@ -13,6 +13,8 @@ const char tile_chars[TILE_TYPES] = {'#', '@', '$', '%', '&'};
 
 char board[BOARD_SIZE][BOARD_SIZE];
 
+Vector2 grid_origin;
+
 char random_tile() {
     return tile_chars[rand() % TILE_TYPES];
 }
@@ -23,6 +25,14 @@ void init_board() {
             board[y][x] = random_tile();
         }
     }
+
+    int grid_width = BOARD_SIZE * TILE_SIZE;
+    int grid_height = BOARD_SIZE * TILE_SIZE;
+
+    grid_origin = (Vector2){
+        (GetScreenWidth() - grid_width) / 2
+        , (GetScreenHeight() - grid_height) / 2
+    };
 }
 
 int main(void) {
@@ -31,9 +41,7 @@ int main(void) {
 
     InitWindow(screen_width, screen_height, "Raylib 2D ASCII MATCH 3");
     SetTargetFPS(60);
-
     srand(time(NULL));
-
     init_board();
 
     while (!WindowShouldClose()) {
@@ -43,8 +51,8 @@ int main(void) {
         for (int y = 0; y < BOARD_SIZE; ++y) {
             for (int x = 0; x < BOARD_SIZE; ++x) {
                 Rectangle rect = {
-                    x * TILE_SIZE
-                    , y * TILE_SIZE
+                    grid_origin.x +(x * TILE_SIZE)
+                    , grid_origin.y + (y * TILE_SIZE)
                     , TILE_SIZE
                     , TILE_SIZE
                 };
