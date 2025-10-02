@@ -28,44 +28,64 @@ char random_tile() {
 bool find_matches() {
     bool found = false;
 
-    for(int y = 0; y < BOARD_SIZE; ++y) {
-        for(int x = 0; x < BOARD_SIZE; ++x) {
-            matched[y][x] = false;
+for (int y = 0; y < BOARD_SIZE; ++y) {
+    for (int x = 0; x < BOARD_SIZE; ++x) {
+        matched[y][x] = false;
+    }
+}
+
+for (int y = 0; y < BOARD_SIZE; ++y) {
+    for (int x = 0; x < BOARD_SIZE - 2; ++x) {
+        char t = board[y][x];
+
+        if (t == board[y][x + 1] && t == board[y][x + 2]) {
+            matched[y][x] = matched[y][x + 1] = matched[y][x + 2] = true;
+
+            score += 10;
+            found = true;
         }
     }
+}
 
-    for(int y = 0; y < BOARD_SIZE; ++y) {
-        for(int x = 0; x < BOARD_SIZE - 2; ++x) {
-            char t = board[y][x];
+for (int x = 0; x < BOARD_SIZE; ++x) {
+    for (int y = 0; y < BOARD_SIZE - 2; ++y) {
+        char t = board[y][x];
 
-            if(t == board[y][x + 1] && t == board[y][x + 2]) {
-                matched[y][x] = matched[y][x + 1] = matched[y][x + 2] = true;
+        if (t == board[y + 1][x] && (t == board[y + 2][x])) {
+            matched[y][x] = matched[y + 1][x] = matched[y + 2][x] = true;
 
-                score += 10;
-                found = true;
-            }
-        } 
-    }
-
-    for(int x = 0; x < BOARD_SIZE; ++x) {
-        for(int y = 0; y < BOARD_SIZE - 2; ++y) {
-            char t = board[y][x];
-
-            if(t == board[y + 1][x] && (t == board[y + 2][x])) {
-                matched[y][x] = matched[y + 1][x] = matched[y + 2][x] = true;
-
-                score += 10;
-                found = true;
-            }
+            score += 10;
+            found = true;
         }
     }
+}
 
-    return found;
+return found;
+}
+
+void resolve_matches() {
+    for (int x = 0; x < BOARD_SIZE; ++x) {
+        int write_y = BOARD_SIZE - 1;
+
+        for (int y = BOARD_SIZE - 1; y >= 0; --y) {
+            if (!matched[y][x]) {
+                board[write_y][x] = board[y][x];
+
+                write_y--;
+            }
+        }
+
+        while (write_y >= 0) {
+            board[write_y][x] = random_tile();
+
+            write_y--;
+        }
+    }
 }
 
 void init_board() {
-    for(int y = 0; y < BOARD_SIZE; ++y) {
-        for(int x = 0; x < BOARD_SIZE; ++x) {
+    for (int y = 0; y < BOARD_SIZE; ++y) {
+        for (int x = 0; x < BOARD_SIZE; ++x) {
             board[y][x] = random_tile();
         }
     }
@@ -92,22 +112,25 @@ int main(void) {
 
     init_board();
 
-    Vector2 mouse = {0, 0};
+    Vector2 mouse = { 0, 0 };
 
-    while(!WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         mouse = GetMousePosition();
 
-        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             int x = (mouse.x - grid_origin.x) / TILE_SIZE;
             int y = (mouse.y - grid_origin.y) / TILE_SIZE;
 
-            if(x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE) {
+            if (x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE) {
                 selected_tile.x = x;
                 selected_tile.y = y;
             }
         }
 
-        find_matches();
+        if(find_matches()) {
+            resolve_matches();
+        }
+
         BeginDrawing();
         ClearBackground(BLACK);
 
