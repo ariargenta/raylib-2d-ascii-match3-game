@@ -14,6 +14,7 @@ const char tile_chars[TILE_TYPES] = {'#', '@', '$', '%', '&'};
 
 char board[BOARD_SIZE][BOARD_SIZE];
 int score = 200;
+bool matched[BOARD_SIZE][BOARD_SIZE] = {0};
 
 Vector2 grid_origin;
 Texture2D background;
@@ -22,6 +23,44 @@ Vector2 selected_tile = {-1, -1};
 
 char random_tile() {
     return tile_chars[rand() % TILE_TYPES];
+}
+
+bool find_matches() {
+    bool found = false;
+
+    for(int y = 0; y < BOARD_SIZE; ++y) {
+        for(int x = 0; x < BOARD_SIZE; ++x) {
+            matched[y][x] = false;
+        }
+    }
+
+    for(int y = 0; y < BOARD_SIZE; ++y) {
+        for(int x = 0; x < BOARD_SIZE - 2; ++x) {
+            char t = board[y][x];
+
+            if(t == board[y][x + 1] && t == board[y][x + 2]) {
+                matched[y][x] = matched[y][x + 1] = matched[y][x + 2] = true;
+
+                score += 10;
+                found = true;
+            }
+        } 
+    }
+
+    for(int x = 0; x < BOARD_SIZE; ++x) {
+        for(int y = 0; y < BOARD_SIZE - 2; ++y) {
+            char t = board[y][x];
+
+            if(t == board[y + 1][x] && (t == board[y + 2][x])) {
+                matched[y][x] = matched[y + 1][x] = matched[y + 2][x] = true;
+
+                score += 10;
+                found = true;
+            }
+        }
+    }
+
+    return found;
 }
 
 void init_board() {
@@ -66,8 +105,9 @@ int main(void) {
                 selected_tile.x = x;
                 selected_tile.y = y;
             }
-        }   
+        }
 
+        find_matches();
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -107,7 +147,7 @@ int main(void) {
                     , (Vector2){rect.x + 12, rect.y + 8}
                     , 20
                     , 1
-                    , WHITE
+                    , matched[y][x] ? GREEN : WHITE
                 );
             }
         }
