@@ -18,14 +18,15 @@ int score = 200;
 Vector2 grid_origin;
 Texture2D background;
 Font score_font;
+Vector2 selected_tile = {-1, -1};
 
 char random_tile() {
     return tile_chars[rand() % TILE_TYPES];
 }
 
 void init_board() {
-    for (int y = 0; y < BOARD_SIZE; ++y) {
-        for (int x = 0; x < BOARD_SIZE; ++x) {
+    for(int y = 0; y < BOARD_SIZE; ++y) {
+        for(int x = 0; x < BOARD_SIZE; ++x) {
             board[y][x] = random_tile();
         }
     }
@@ -52,7 +53,21 @@ int main(void) {
 
     init_board();
 
-    while (!WindowShouldClose()) {
+    Vector2 mouse = {0, 0};
+
+    while(!WindowShouldClose()) {
+        mouse = GetMousePosition();
+
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            int x = (mouse.x - grid_origin.x) / TILE_SIZE;
+            int y = (mouse.y - grid_origin.y) / TILE_SIZE;
+
+            if(x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE) {
+                selected_tile.x = x;
+                selected_tile.y = y;
+            }
+        }   
+
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -75,8 +90,8 @@ int main(void) {
             , WHITE
         );
 
-        for (int y = 0; y < BOARD_SIZE; ++y) {
-            for (int x = 0; x < BOARD_SIZE; ++x) {
+        for(int y = 0; y < BOARD_SIZE; ++y) {
+            for(int x = 0; x < BOARD_SIZE; ++x) {
                 Rectangle rect = {
                     grid_origin.x +(x * TILE_SIZE)
                     , grid_origin.y + (y * TILE_SIZE)
@@ -95,6 +110,19 @@ int main(void) {
                     , WHITE
                 );
             }
+        }
+
+        if(selected_tile.x >= 0) {
+            DrawRectangleLinesEx(
+                (Rectangle){
+                    grid_origin.x + (selected_tile.x * TILE_SIZE)
+                    , grid_origin.y + (selected_tile.y * TILE_SIZE)
+                    , TILE_SIZE
+                    , TILE_SIZE
+                }
+                , 2
+                , YELLOW
+            );
         }
 
         DrawTextEx(
