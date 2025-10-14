@@ -11,17 +11,27 @@
 #define SCORE_FONT_SIZE 32
 
 const char tile_chars[TILE_TYPES] = {'#', '@', '$', '%', '&'};
+const float MATCH_DELAY_DURATION;
 
 char board[BOARD_SIZE][BOARD_SIZE];
 int score = 200;
 bool matched[BOARD_SIZE][BOARD_SIZE] = {0};
 float fall_offset[BOARD_SIZE][BOARD_SIZE] = {0};
 float fall_speed = 8.0f;
+float match_delay_timer = 0.0f;
 
 Vector2 grid_origin;
 Texture2D background;
 Font score_font;
-Vector2 selected_tile = {-1, -1};
+Vector2 selected_tile = { -1, -1 };
+
+typedef enum {
+    STATE_IDLE
+    , STATE_ANIMATING
+    , STATE_MATCH_DELAY
+} TileState;
+
+TileState tile_state;
 
 char random_tile() {
     return tile_chars[rand() % TILE_TYPES];
@@ -101,6 +111,8 @@ void resolve_matches() {
             write_y--;
         }
     }
+
+    tile_state = STATE_ANIMATING;
 }
 
 void init_board() {
@@ -117,6 +129,13 @@ void init_board() {
         (GetScreenWidth() - grid_width) / 2
         , (GetScreenHeight() - grid_height) / 2
     };
+
+    if(find_matches()) {
+        resolve_matches();
+    }
+    else {
+        tile_state = STATE_IDLE;
+    }
 }
 
 int main(void) {
@@ -137,7 +156,7 @@ int main(void) {
     while(!WindowShouldClose()) {
         mouse = GetMousePosition();
 
-        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if(tile_state == STATE_IDLE && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             int x = (mouse.x - grid_origin.x) / TILE_SIZE;
             int y = (mouse.y - grid_origin.y) / TILE_SIZE;
 
@@ -174,17 +193,43 @@ int main(void) {
             }
         }
 
-        for(int y = 0; y < BOARD_SIZE; ++y) {
-            for(int x = 0; x < BOARD_SIZE; ++x) {
-                if(fall_offset[y][x] > 0) {
-                    fall_offset[y][x] -= fall_speed;
+        if(tile_state == STATE_ANIMATING) {
+            bool still_animating = false;
 
-                    if(fall_offset[y][x] < 0) {
+            for(int y = 0; y < BOARD_SIZE; ++y) {
+                for(int x = 0; x < BOARD_SIZE; ++x) {
+                    if(fall_offset[y][x] > 0) {
+                        fall_offset[y][x] -= fall_speed;
 
+                        if(fall_offset[y][x] < 0) {
+                            fall_offset[y][x] = 0;
+                        }
+                        else {
+                            still_animating = true;
+                        }
                     }
                 }
             }
+
+            if(!still_animating) {
+                tile_state = STATE_MATCH_DELAY;
+                match_delay_timer = MATCH_DELAY_DURATION;
+            }
         }
+
+        if(tile_state == STATE_MATCH_DELAY) {
+            match_delay_timer -= GetFrameTime();
+
+            if(match_delay_timer <= 0.0f) {
+                if(find_matches()) {
+                    resolve_matches();
+                }
+                else {
+                    tile_state = STATE_IDLE;
+                }
+            }
+        }
+
 
         BeginDrawing();
         ClearBackground(BLACK);
