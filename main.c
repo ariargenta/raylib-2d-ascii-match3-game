@@ -14,12 +14,16 @@
 const char tile_chars[TILE_TYPES] = {'#', '@', '$', '%', '&'};
 const float MATCH_DELAY_DURATION;
 
-char board[BOARD_SIZE][BOARD_SIZE];
-int score = 200;
 bool matched[BOARD_SIZE][BOARD_SIZE] = {0};
+bool score_animating = false;
+
+char board[BOARD_SIZE][BOARD_SIZE];
+int score = 0;
 float fall_offset[BOARD_SIZE][BOARD_SIZE] = {0};
 float fall_speed = 8.0f;
 float match_delay_timer = 0.0f;
+float score_scale = 1.0f;
+float score_scale_velocity = 0.0f;
 
 Vector2 grid_origin;
 Texture2D background;
@@ -100,6 +104,11 @@ bool find_matches() {
                 found = true;
 
                 PlaySound(match_sound);
+
+                score_animating = true;
+                score_scale = 2.0f;
+                score_scale_velocity = -2.5f;
+
                 add_score_popup(x, y, 10, grid_origin);
             }
         }
@@ -117,6 +126,11 @@ bool find_matches() {
                 found = true;
 
                 PlaySound(match_sound);
+
+                score_animating = true;
+                score_scale = 2.0f;
+                score_scale_velocity = -2.5f;
+
                 add_score_popup(x, y, 10, grid_origin);
             }
         }
@@ -287,6 +301,15 @@ int main(void) {
             }
         }
 
+        if(score_animating) {
+            score_scale += score_scale_velocity * GetFrameTime();
+
+            if(score_scale <= 1.0f) {
+                score_scale = 1.0f;
+                score_animating = false;
+            }
+        }
+
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -361,7 +384,7 @@ int main(void) {
             score_font
             , TextFormat("SCORE: %d", score)
             , (Vector2) {20, 20}
-            , SCORE_FONT_SIZE
+            , SCORE_FONT_SIZE * score_scale
             , 1.0f
             , YELLOW
         );
