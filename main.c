@@ -24,6 +24,8 @@ Vector2 grid_origin;
 Texture2D background;
 Font score_font;
 Vector2 selected_tile = { -1, -1 };
+Music background_music;
+Sound match_sound;
 
 typedef enum {
     STATE_IDLE
@@ -67,6 +69,8 @@ bool find_matches() {
                 score += 10;
 
                 found = true;
+
+                PlaySound(match_sound);
             }
         }
     }
@@ -81,6 +85,8 @@ bool find_matches() {
                 score += 10;
 
                 found = true;
+
+                PlaySound(match_sound);
             }
         }
     }
@@ -146,14 +152,22 @@ int main(void) {
     SetTargetFPS(60);
     srand(time(NULL));
 
+    InitAudioDevice();
+
     background = LoadTexture("cosmos.jpeg");
     score_font = LoadFontEx("RygaRegular.ttf", SCORE_FONT_SIZE, NULL, 0);
+    background_music = LoadMusicStream("bgm_old.mp3");
+    match_sound = LoadSound("match.mp3");
+
+    PlayMusicStream(background_music);
 
     init_board();
 
     Vector2 mouse = { 0, 0 };
 
     while(!WindowShouldClose()) {
+        UpdateMusicStream(background_music);
+
         mouse = GetMousePosition();
 
         if(tile_state == STATE_IDLE && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -313,9 +327,12 @@ int main(void) {
         EndDrawing();
     }
 
+    StopMusicStream(background_music);
+    UnloadMusicStream(background_music);
+    UnloadSound(match_sound);
     UnloadTexture(background);
     UnloadFont(score_font);
-
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;
